@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-30 10:25:21
- * @LastEditTime: 2020-10-04 11:36:06
+ * @LastEditTime: 2020-10-05 12:31:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /algorithms/ArrayList.js
@@ -9,7 +9,47 @@
 function ArrayList(){
     let array = []
 
-    let heapify = (array, heapSize, i) => {
+    const getBucketIndex = (value, minValue, significantDigit, radixBase) => 
+          Math.floor(((value - minValue) / significantDigit) % radixBase)
+
+    const countingSortForRadix = (array, radixBase, significantDigit, minValue) => {
+        let bucketsIndex 
+        let buckets = []
+        const aux = []
+
+        // 初始化桶
+        for(let i = 0; i < radixBase; i++){
+            buckets[i] = 0
+        }
+
+        // 分类统计
+        array.forEach( i => {
+            // 求待排序元素数值所对应的下标
+            bucketsIndex = getBucketIndex(i, minValue, significantDigit, radixBase)
+            // 有相同的进行累计
+            buckets[bucketsIndex]++
+        })
+
+        // 数组元素进行累加,表示已占用位置
+        for(let i = 1; i < radixBase; i++){
+            buckets[i] += buckets[i-1] 
+        }
+
+        // buckets根据下标对待排序元素进行分类统计，idx拿到排好的位置，和待排序元素相对应，排序后写回新数组aux中
+        for(let i = array.length -1; i >= 0; i--){
+            bucketsIndex = getBucketIndex(array[i], minValue, significantDigit, radixBase)
+            let idx = --buckets[bucketsIndex]
+            aux[idx] = array[i]
+        }
+
+        // 将排好序的数组写回原数组
+        for (let i = 0; i < array.length; i++) {
+            array[i] = aux[i];
+        }
+        return array;
+    }
+
+    const heapify = (array, heapSize, i) => {
         let left = i*2+1
         let right = i*2+2
         let largest = i
@@ -28,14 +68,14 @@ function ArrayList(){
         }
     }
 
-    let buildHeap = (array) => {
+    const buildHeap = (array) => {
         let heapSize = array.length
         for(let i = array[Math.floor(array.length / 2)]; i >= 0; i--){
             heapify(array, heapSize, i)
         }
     }
 
-    let partition = (array, left, right) => {
+    const partition = (array, left, right) => {
         let mid = array[Math.floor((left+right)/2)],
             i = left,
             j = right;
@@ -56,7 +96,7 @@ function ArrayList(){
         return i
     }
 
-    let quick = (array, left, right) => {
+    const quick = (array, left, right) => {
         let index
         if(array.length > 1){
             index = partition(array, left, right)
@@ -69,7 +109,7 @@ function ArrayList(){
         }
     }
 
-    let merge = (left, right) => {
+    const merge = (left, right) => {
         let il = 0,
             ir = 0,
             result = [];
@@ -92,7 +132,7 @@ function ArrayList(){
         return result
     }
 
-    let mergeSortRec = (array) => {
+    const mergeSortRec = (array) => {
         if(array.length === 1){
             return array
         }
@@ -209,6 +249,7 @@ function ArrayList(){
 
     //桶排序
     this.bucketSort = (s,k) => {
+        // 需要参数
         //A排序数组,k桶子数量,s桶子空间尺度
         let A = array
         const buckets = Array.from({length:k}, ()=>[]) //创建桶子
@@ -228,6 +269,25 @@ function ArrayList(){
         //把每个桶子数据合并
         return [].concat(...buckets)    
     }
+
+    // 基数排序
+    this.radixSort = (radixBase = 10) => {
+        // 需要参数
+        // array 待排序数组
+        // radixBase 划分基数
+        if(array.length < 2){
+            return 
+        }
+        const minValue = Math.min(...array)
+        const maxValue = Math.max(...array) 
+        let significantDigit = 1
+        while((maxValue - minValue) / significantDigit > 1){
+            array = countingSortForRadix(array, radixBase, significantDigit, minValue)
+            significantDigit *= radixBase
+        }
+
+        return array
+    }
 }
 
 function createArr(size){
@@ -239,7 +299,7 @@ function createArr(size){
 }
 
 let array = createArr(10)
-array.bucketSort(10,5)
+array.radixSort(10)
 console.log(array.toString())
 
 
